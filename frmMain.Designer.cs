@@ -66,7 +66,6 @@
             this.mnuKeyword_Remove = new System.Windows.Forms.ToolStripMenuItem();
             this.trayIco = new System.Windows.Forms.NotifyIcon(this.components);
             this.tmrChecker = new System.Windows.Forms.Timer(this.components);
-            this.label1 = new System.Windows.Forms.Label();
             this.lblCaption10 = new System.Windows.Forms.Label();
             this.txtInstanceTag = new System.Windows.Forms.TextBox();
             this.txtInputFile = new System.Windows.Forms.ComboBox();
@@ -76,6 +75,7 @@
             this.txtInputAPI = new System.Windows.Forms.TextBox();
             this.optMonitorOn_Remote = new System.Windows.Forms.RadioButton();
             this.optMonitorOn_Local = new System.Windows.Forms.RadioButton();
+            this.lstLog = new System.Windows.Forms.ListBox();
             this.grpEncoding.SuspendLayout();
             this.grpPromptMethod.SuspendLayout();
             this.grpSummary.SuspendLayout();
@@ -161,7 +161,7 @@
             this.lstKeyword.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
             this.lstKeyword.Location = new System.Drawing.Point(14, 94);
             this.lstKeyword.Name = "lstKeyword";
-            this.lstKeyword.Size = new System.Drawing.Size(274, 216);
+            this.lstKeyword.Size = new System.Drawing.Size(274, 235);
             this.lstKeyword.TabIndex = 3;
             this.lstKeyword.UseCompatibleStateImageBehavior = false;
             this.lstKeyword.View = System.Windows.Forms.View.Details;
@@ -404,15 +404,6 @@
             // 
             this.tmrChecker.Tick += new System.EventHandler(this.tmrChecker_Tick);
             // 
-            // label1
-            // 
-            this.label1.Location = new System.Drawing.Point(12, 313);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(276, 18);
-            this.label1.TabIndex = 4;
-            this.label1.Text = "注意：将按行检索关键字，仅支持CRLF换行符！";
-            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
             // lblCaption10
             // 
             this.lblCaption10.Location = new System.Drawing.Point(298, 202);
@@ -486,6 +477,7 @@
             this.optMonitorOn_Remote.TabStop = true;
             this.optMonitorOn_Remote.Text = "远端API";
             this.optMonitorOn_Remote.UseVisualStyleBackColor = true;
+            this.optMonitorOn_Remote.CheckedChanged += new System.EventHandler(this.optMonitorOn_Remote_CheckedChanged);
             // 
             // optMonitorOn_Local
             // 
@@ -497,16 +489,26 @@
             this.optMonitorOn_Local.TabStop = true;
             this.optMonitorOn_Local.Text = "本地文件";
             this.optMonitorOn_Local.UseVisualStyleBackColor = true;
+            this.optMonitorOn_Local.CheckedChanged += new System.EventHandler(this.optMonitorOn_Local_CheckedChanged);
+            // 
+            // lstLog
+            // 
+            this.lstLog.FormattingEnabled = true;
+            this.lstLog.ItemHeight = 12;
+            this.lstLog.Location = new System.Drawing.Point(14, 335);
+            this.lstLog.Name = "lstLog";
+            this.lstLog.Size = new System.Drawing.Size(598, 52);
+            this.lstLog.TabIndex = 17;
             // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(624, 337);
+            this.ClientSize = new System.Drawing.Size(624, 392);
+            this.Controls.Add(this.lstLog);
             this.Controls.Add(this.grpInput);
             this.Controls.Add(this.txtInstanceTag);
             this.Controls.Add(this.lblCaption10);
-            this.Controls.Add(this.label1);
             this.Controls.Add(this.lblCaption7);
             this.Controls.Add(this.txtInterval);
             this.Controls.Add(this.lblCaption6);
@@ -576,7 +578,6 @@
         private System.Windows.Forms.ToolStripMenuItem mnuKeyword_Remove;
         private System.Windows.Forms.NotifyIcon trayIco;
         private System.Windows.Forms.Timer tmrChecker;
-        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label lblCaption10;
         private System.Windows.Forms.TextBox txtInstanceTag;
         private System.Windows.Forms.ComboBox txtInputFile;
@@ -589,6 +590,7 @@
         private System.Windows.Forms.RadioButton optMonitorOn_Local;
         private System.Windows.Forms.TextBox txtInputAPISecret;
         private System.Windows.Forms.Label lblCaption11;
+        private System.Windows.Forms.ListBox lstLog;
     }
 }
 

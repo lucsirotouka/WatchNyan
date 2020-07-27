@@ -20,8 +20,8 @@ namespace WatchNyan
         bool[] isKeywordPrompted;
         //某关键字的全行内容
         string[] keywordFullLine;
-        //Minecraft样式代码前导符『§』及正则匹配对象
-        string mcFormatCode = "§"; Regex mcFormatCodeRegex = new Regex("§[a-zA-Z0-9]");
+        //Minecraft样式代码前导符『§』正则匹配对象
+        Regex mcFormatCodeRegex = new Regex("§[a-zA-Z0-9]");
         //提示内容提交给远端 API 的地址及密钥
         string notify_remoteAPI = string.Empty;
         string notify_remoteAPIsecret = string.Empty;
@@ -35,6 +35,7 @@ namespace WatchNyan
         {
             InitializeForm();
             LoadSettings();
+            writeLog("程序启动");
         }
 
         //关闭窗口时如果正在监视，缩小到通知区域
@@ -55,6 +56,36 @@ namespace WatchNyan
         private void trayIco_DoubleClick(object sender, EventArgs e)
         {
             this.Show();
+        }
+
+        //选中来源为本地文件时，启用文件编码等选项
+        private void optMonitorOn_Local_CheckedChanged(object sender, EventArgs e)
+        {
+            if(optMonitorOn_Local.Checked)
+            {
+                txtInputFile.Enabled = true;
+                txtInputAPI.Enabled = false;
+                txtInputAPISecret.Enabled = false;
+                lstKeyword.Enabled = true;
+                grpEncoding.Enabled = true;
+                grpOffset.Enabled = true;
+                txtInstanceTag.Enabled = true;
+            }
+        }
+
+        //选中来源为API时，禁用无关选项
+        private void optMonitorOn_Remote_CheckedChanged(object sender, EventArgs e)
+        {
+            if(optMonitorOn_Remote.Checked)
+            {
+                txtInputFile.Enabled = false;
+                txtInputAPI.Enabled = true;
+                txtInputAPISecret.Enabled = true;
+                lstKeyword.Enabled = false;
+                grpEncoding.Enabled = false;
+                grpOffset.Enabled = false;
+                txtInstanceTag.Enabled = false;
+            }
         }
 
         //打开文件
@@ -294,10 +325,12 @@ namespace WatchNyan
                     {
                         ln_parts = ln.Split('|');
                         if (ln_parts.Length != 2) continue;
-                        output.AppendLine("【" + ln_parts[0] + "】" + ln_parts[1]);
+                        output.AppendLine("【" + fromTimestamp(ln_parts[0]) + "】" + ln_parts[1]);
                     }
                     if (output.Length > 0)
                     {
+                        //写日志
+                        writeLog("远端 API 下发消息：" + output.ToString());
                         //弹出新窗口
                         if (chkNotify_OpenWnd.Checked) MessageBox.Show("来自 API 的新消息：\r\n" + output.ToString(), "新消息！", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         //气泡通知
@@ -350,7 +383,7 @@ namespace WatchNyan
                     if ((xN_RecentAPI is null) == false)
                     {
                         if (!(xN_RecentAPI.Attributes["url"] is null)) txtInputAPI.Text = xN_RecentAPI.Attributes["url"].InnerText;
-                        if (!(xN_RecentAPI.Attributes["secret"] is null)) txtInputAPI.Text = xN_RecentAPI.Attributes["secret"].InnerText;
+                        if (!(xN_RecentAPI.Attributes["secret"] is null)) txtInputAPISecret.Text = xN_RecentAPI.Attributes["secret"].InnerText;
                     }
                     //加载关键字列表，及是否显示全行内容
                     xNL = x.SelectNodes("/Settings/Keywords/Keyword");
@@ -506,6 +539,12 @@ namespace WatchNyan
             }
         }
 
+        //写日志
+        private void writeLog(string s) {
+            lstLog.Items.Add("[" + DateTime.Now.ToString("yyyy/mm/dd HH:mm:ss") + "] " + s);
+            if (lstLog.Items.Count > 0) lstLog.SelectedIndex = lstLog.Items.Count - 1;
+        }
+
         //发出提示
         private void makePrompt(string kw1, string kw2, string showFullLine, string fullLine)
         {
@@ -533,25 +572,33 @@ namespace WatchNyan
             if (chkNotify_API.Checked == true)
             {
                 //提交给远程 API
-                httpPost(notify_remoteAPI, notify_remoteAPIsecret, "action=update&text=" + HttpUtility.UrlEncode("关键字：" + kw1 + "，配合关键字：" + kw2));
+                string r = httpPost(notify_remoteAPI, notify_remoteAPIsecret, "action=update&text=" + HttpUtility.UrlEncode("关键字：" + kw1 + "，配合关键字：" + kw2));
+                if (r == "ok") { writeLog("提交给远程 API 成功"); }
+                else { writeLog("提交给远程 API 时发生错误：" + (string.IsNullOrEmpty(r) ? "服务器返回为空" : r)); }
             }
         }
 
         //远端 API POST 操作
         private string httpPost(string apiUrl, string apiSecret, string otherArgs)
         {
-            HttpWebRequest wReq = (HttpWebRequest)WebRequest.Create(apiUrl);
-            wReq.Method = "POST";
-            wReq.Timeout = 5000;
-            wReq.ReadWriteTimeout = 5000;
-            wReq.ContentType = "application/x-www-form-urlencoded";
-            otherArgs += "&key=" + apiSecret;
-            byte[] postByte = Encoding.UTF8.GetBytes(otherArgs);
-            Stream postStream = wReq.GetRequestStream();
-            postStream.Write(postByte, 0, postByte.Length);
-            postStream.Close();
-            try { WebResponse wResp = wReq.GetResponse(); return new StreamReader(wResp.GetResponseStream()).ReadToEnd(); }
-            catch { return string.Empty; }
+            try
+            {
+                HttpWebRequest wReq = (HttpWebRequest)WebRequest.Create(apiUrl);
+                wReq.Method = "POST";
+                wReq.Timeout = 5000;
+                wReq.ReadWriteTimeout = 5000;
+                wReq.ContentType = "application/x-www-form-urlencoded";
+                otherArgs += "&key=" + apiSecret;
+                byte[] postByte = Encoding.UTF8.GetBytes(otherArgs);
+                Stream postStream = wReq.GetRequestStream();
+                postStream.Write(postByte, 0, postByte.Length);
+                postStream.Close();
+                WebResponse wResp = wReq.GetResponse(); return new StreamReader(wResp.GetResponseStream()).ReadToEnd();
+            }
+            catch(Exception ex) {
+                writeLog("HTTP POST 失败：" + ex.Message);
+                return string.Empty;
+            }
         }
 
         //将时间戳转换为 DateTime
@@ -559,5 +606,6 @@ namespace WatchNyan
         {
             return new DateTime(1970, 1, 1, 0, 0, 0).AddSeconds(Convert.ToInt64(ts)).AddHours(8);
         }
+
     }
 }
